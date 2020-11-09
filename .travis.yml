@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jmatsen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run jmatsen/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jmatsen/multi-client ./client
+  - docker build -t jmatsen/multi-nginx ./nginx
+  - docker build -t jmatsen/multi-server ./server
+  - docker build -t jmatsen/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docekr login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push jmatsen/multi-client
+  - docker push jmatsen/multi-nginx
+  - docker push jmatsen/multi-server
+  - docker push jmatsen/multi-worker
+
